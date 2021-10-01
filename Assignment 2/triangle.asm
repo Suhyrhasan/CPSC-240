@@ -19,7 +19,7 @@
 ; Program name: The Right Triangles Program
 ;  Programming languages X86 with one module in C++
 ;  Date development of version 1.5 began 2021-Sep-10
-;  Date development of version 1.5 completed 2021-Sep-21
+;  Date development of version 1.5 completed 2021-Sep-27
 ;
 ;Purpose
 ;  In this assignment teaches you how to input and output a float in assembly with proper formatting
@@ -60,6 +60,8 @@ inputprompt db "Please enter the sides of your triangle separated by ws: ",0
 areaprompt db "The areas of this triangle is %5.5lf square units.",10,0 
 hypotenuseprompt db "The length of the hypotenuse is %5.9lf units.",10,0
 goodbye db "Please enjoy your triangles ",0  
+validinputs db 10, "These values were received:  %.7lf   %.7lf   %.7lf", 10, 0
+invalid db 10, "An invalid input was detected. Please run the program again.", 10, 0
 
 stringformat db "%s", 0       ;general string format
 twofloatformat db "%lf %lf",0 ;general 2 8-byte float format
@@ -91,7 +93,7 @@ push  r15                     ;Backup r15
 push  rbx                     ;Backup rbx
 pushf                         ;Backup rflags      
 ;Registers rax, rip, and rsp are usually not backed up.
-push qword 0
+;push qword 0
 
 ;=========== Prompt for programmer's name =====================================================================================
 ;Note that at this point there are no vital data in registers to be saved.  Therefore, there is no back up process at this time.
@@ -140,14 +142,29 @@ movsd xmm12, [rsp]            ;Place user float input for side 1 in xmm12
 movsd xmm13, [rsp+8]          ;Place user float input for side 2 in xmm13
 
 movsd xmm8,  [rsp]            ;Place user float input for side 1 in xmm8
-movsd xmm9,  [rsp+8]          ;Place user float input for side 2 in xmm13
+movsd xmm9,  [rsp+8]          ;Place user float input for side 2 in xmm9
 
 pop rax                       ;Reverse the previous "push qword -2"
 pop rax                       ;Reverse the previous "push qword -1"
 pop rax                       ;Reverse the previous "push qword 99"
 push qword 99                 ;Get on boundary  
-
 ;=========== Calculate the area =================================================================================================    
+xorps xmm6, xmm6
+
+ucomisd xmm4, xmm6 
+jbe less_than_equa
+ucomisd xmm5, xmm6 
+jbe less_than_equa 
+jmp area_hypotenuse
+
+less_than_equa:
+mov  rax, 0                 
+mov  rdi, errorprompt   
+call printf
+movsd xmm12, xmm6
+jmp endfunction
+;=========== Calculate the area =================================================================================================   
+area_hypotenuse:              ;Entry point for area/hypotenuse calculations
 mulsd xmm8, xmm9              ;Multiple side 1 and side 2
 mov r10 , two_point_zero      ;Place the constant, 2.0, in r15
 push r10                      ;Now r15 is on top of the stack
@@ -171,9 +188,6 @@ movsd xmm0, xmm12             ;Store the value of hypotenuse in xmm0
 mov rax, 1                    ;1 floating point number stored in xmm0 will be outputted
 mov rdi, hypotenuseprompt     ;"The length of the hypotenuse is %5.9lf units."    
 call printf                   ;Call a library function to do the output
-
-pop rax                       ;Rverse previous "push qword 99"
-pop rax                       ;Reverse the push near the beginning of this asm function.
 
 ;=========== Show farewell message ==============================================================================================            
 mov qword  rax, 0             ;No data from SSE will be printed
@@ -203,8 +217,10 @@ mov rdi, stringformat         ;"%s"
 mov rsi, name                 ;Place a pointer to the programmer's title in rsi
 mov byte [rsi + r13 -1], " "  ;replaces newline character with a space
 call printf                   ;Call a library function to do the output 
+jmp endfunction               ; jump to the end of function
 
 ;=========== Returns hypotenuse to the calling program ==========================================================================
+endfunction:                   ;end of function
 movsd xmm0, xmm12              ;Select the largest value for return to caller.
 
 ;===== Restore the pointer to the start of the stack frame before exiting from this function ====================================

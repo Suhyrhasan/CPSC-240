@@ -23,6 +23,7 @@
 ;
 ;Purpose
 ;  In this assignment teaches you how to input and output a float in assembly with proper formatting
+;  and how to check if the user inputs a negative or zero value for a side.
 ;
 ;Project information
 ;  Files: pythagoras.c, triangle.asm, run.sh
@@ -31,8 +32,9 @@
 ;  Linux: nasm -f elf64 -l triangle.lis -o triangle.o triangle.asm
 ;
 ;References and credits
-;  Jorgensen, Chapter 18
+;  Jorgensen, Chapter 7&18
 ;===== Begin code area =======================================================================================================
+
 extern printf                 ;External C++ function for writing to standard output device
 extern scanf                  ;External C++ function for reading from the standard input device
 extern fgets                  ;Function borrowed from one of the C libraries.
@@ -47,7 +49,9 @@ max_title_size equ 15         ;Maximum number of characters accepted for title i
 two_point_zero equ 0x4000000000000000  ;Use the hex expression for 64-bit floating point 2.0
 
 segment .data                  ;Place initialized data here
-;=========== Declare some messages ==============================================================================================
+
+;=========== Declare some messages ===========================================================================================
+
 ;The identifiers in this segment are quadword pointers to ascii strings stored in heap space.They are not variables.  
 ;They are not constants. There are no constants in assembly programming.  There are no variables in assembly programming: 
 ;the registers assume the role of variables.
@@ -60,8 +64,7 @@ inputprompt db "Please enter the sides of your triangle separated by ws: ",0
 areaprompt db "The areas of this triangle is %5.5lf square units.",10,0 
 hypotenuseprompt db "The length of the hypotenuse is %5.9lf units.",10,0
 goodbye db "Please enjoy your triangles ",0  
-validinputs db 10, "These values were received:  %.7lf   %.7lf   %.7lf", 10, 0
-invalid db 10, "An invalid input was detected. Please run the program again.", 10, 0
+errorprompt db "An invalid input was received, please restart the program",10, 0
 
 stringformat db "%s", 0       ;general string format
 twofloatformat db "%lf %lf",0 ;general 2 8-byte float format
@@ -71,11 +74,13 @@ segment .bss                  ;Declare pointers to un-initialized space in this 
 name resb max_name_size       ;Create char of size max_name_size bytes
 title resb max_title_size     ;Create char of size max_title_size bytes
 
-;=========== Begin the application here: show how to input and output floats ===================================================
+;=========== Begin the application here: show how to input and output floats =================================================
+
 segment .text                 ;Place executable instructions in this segment.
 floating:                     ;Entry point.  Execution begins here.
 
-;=========== Back up all the GPRs whether used in this program or not =========================================================
+;=========== Back up all the GPRs whether used in this program or not ========================================================
+
 push  rbp                     ;Save a copy of the stack base pointer
 mov   rbp,rsp                 ;We do this in order to be 100% compatible with C and C++.
 push  rdi                     ;Backup rdi
@@ -93,41 +98,44 @@ push  r15                     ;Backup r15
 push  rbx                     ;Backup rbx
 pushf                         ;Backup rflags      
 ;Registers rax, rip, and rsp are usually not backed up.
-;push qword 0
 
-;=========== Prompt for programmer's name =====================================================================================
-;Note that at this point there are no vital data in registers to be saved.  Therefore, there is no back up process at this time.
-mov  rax, 0                  ;A zero in rax means printf uses no data from xmm registers.
-mov  rdi, nameprompt         ;"Please enter your last name: "
-call printf                  ;Call a library function to make the output
+;=========== Prompt for programmer's name ====================================================================================
 
-;=========== Obtain the user's name ============================================================================================
+mov  rax, 0                   ;A zero in rax means printf uses no data from xmm registers.
+mov  rdi, nameprompt          ;"Please enter your last name: "
+call printf                   ;Call a library function to make the output
+
+;=========== Obtain the user's name ==========================================================================================
+
 mov  rdi, name                ;Copy to rdi the pointer to the start of the array of 32 bytes
 mov  rsi, max_name_size       ;Provide to fgets the size of the storage made available for input
 mov  rdx, [stdin]             ;stdin is a pointer to the device; rdx receives the device itself
-call fgets                    ;Call the C function to get a line of text and stop when NULL is encountered or 31 chars have been stored.
+call fgets                    ;C function get a line of text and stop when NULL is encountered or 31 chars have been stored.
 
-;=========== Prompt for programmer's title =====================================================================================
+;=========== Prompt for programmer's title ===================================================================================
+
 mov  rax, 0                   ;A zero in rax means printf uses no data from xmm registers.
 mov  rdi, stringformat        ;"%s"
 mov  rsi, titleprompt         ;"Please enter your title (Mr, Ms, Nurse, Engineer, etc): "
 call printf                   ;Call a library function to make the output
 
-;=========== Obtain the user's title ============================================================================================
+;=========== Obtain the user's title =========================================================================================
+
 mov  rdi, title               ;Copy to rdi the pointer to the start of the array of 32 bytes
 mov  rsi, max_title_size      ;Provide to fgets the size of the storage made available for input
 mov  rdx, [stdin]             ;stdin is a pointer to the device; rdx receives the device itself
-call fgets                    ;Call the C function to get a line of text and stop when NULL is encountered or 31 chars have been stored.
+call fgets                    ;C function get a line of text and stop when NULL is encountered or 31 chars have been stored.
 
-;=========== Prompt for the user asking for inputs =============================================================================
-push qword 99                 ;Get on the boundary
+;=========== Prompt for the user asking for inputs ===========================================================================
+
 mov  rax, 0                   ;A zero in rax means printf uses no data from xmm registers
 mov  rdi, inputprompt         ;"Please enter the sides of your triangle separated by ws: "
 call printf                   ;Call a library function to make the output
 pop  rax                      ;Reverse the push in the scanf block
 push qword 99                 ;Get on boundary
 
-;=========== Obtain the sides of the user's triangle ============================================================================
+;=========== Obtain the sides of the user's triangle =========================================================================
+
 push qword -1                 ;Create space for 2 float numbers
 push qword -2                 ;Create space for 2 float numbers
 mov rax, 0                    ;A zero in rax means printf uses no data from xmm registers
@@ -137,33 +145,43 @@ mov rdx, rsp
 add rdx, 8                    ;rdx points to second quadword on the stack
 call scanf                    ;Call a library function to do the input work
 
-;=========== Stores the user's sides input ======================================================================================
+;=========== Stores the user's sides input ===================================================================================
+
 movsd xmm12, [rsp]            ;Place user float input for side 1 in xmm12
 movsd xmm13, [rsp+8]          ;Place user float input for side 2 in xmm13
 
 movsd xmm8,  [rsp]            ;Place user float input for side 1 in xmm8
 movsd xmm9,  [rsp+8]          ;Place user float input for side 2 in xmm9
 
+movsd xmm4, [rsp]             ;Place user float input for side 1 in xmm4
+movsd xmm5, [rsp+8]           ;Place user float input for side 2 in xmm5
+
 pop rax                       ;Reverse the previous "push qword -2"
 pop rax                       ;Reverse the previous "push qword -1"
 pop rax                       ;Reverse the previous "push qword 99"
 push qword 99                 ;Get on boundary  
-;=========== Calculate the area =================================================================================================    
-xorps xmm6, xmm6
 
-ucomisd xmm4, xmm6 
-jbe less_than_equa
-ucomisd xmm5, xmm6 
-jbe less_than_equa 
-jmp area_hypotenuse
+;=========== Verify if input is valid ========================================================================================  
 
-less_than_equa:
-mov  rax, 0                 
-mov  rdi, errorprompt   
-call printf
-movsd xmm12, xmm6
-jmp endfunction
-;=========== Calculate the area =================================================================================================   
+xorps xmm6, xmm6              ;A zero in rax means printf uses no data from xmm registers. 
+
+ucomisd xmm4, xmm6            ;Compare float input for side 1 to zero
+jbe less_than_equa            ;Jump if below or equal 
+ucomisd xmm5, xmm6            ;Compare float input for side 2 to zero
+jbe less_than_equa            ;Jump if below or equal       
+jmp area_hypotenuse           ;Jump to area_hypotenuse 
+
+;=========== If input is invalid =============================================================================================
+
+less_than_equa:               ;Entry point for invalid input
+mov  rax, 0                   ;A zero in rax means printf uses no data from xmm registers.        
+mov  rdi, errorprompt         ;"An invalid input was received, please restart the program"
+call printf                   ;Call a library function to make the output
+movsd xmm12, xmm6             ;Stores the zero in xmm6 in xmm12
+jmp endfunction               ;jump to the end of programm
+
+;=========== Calculate the area ==============================================================================================  
+
 area_hypotenuse:              ;Entry point for area/hypotenuse calculations
 mulsd xmm8, xmm9              ;Multiple side 1 and side 2
 mov r10 , two_point_zero      ;Place the constant, 2.0, in r15
@@ -172,60 +190,68 @@ divsd xmm8, [rsp]             ;Divide the input numbers by the constant, 2.0
 pop r10                       ;Return the stack to its former state
 movsd xmm0, xmm8              ;Stores the value of area in xmm0
 
-;=========== Output the area ====================================================================================================
+;=========== Output the area =================================================================================================
+
 mov rax, 1                    ;1 floating point number stored in xmm0 will be outputted
 mov rdi, areaprompt           ;"The areas of this triangle is %5.5lf square units.
 call printf                   ;Call a library function to do the output
 
-;=========== Calculate the a hypotenuse =========================================================================================  
+;=========== Calculate the a hypotenuse ======================================================================================  
+
 mulsd  xmm12, xmm12           ;Square side 1 by multipling side 1 and side 1
 mulsd  xmm13, xmm13           ;Square side 2 by multipling side 2 and side 2
 addsd  xmm12, xmm13           ;Add (side 1)^2 (side 2)^2 then store it in xmm12
 sqrtsd xmm12, xmm12           ;Square root/hypotenuse
 movsd xmm0, xmm12             ;Store the value of hypotenuse in xmm0
 
-;=========== Outputs the a hypotenuse ===========================================================================================
+;=========== Outputs the a hypotenuse ========================================================================================
+
 mov rax, 1                    ;1 floating point number stored in xmm0 will be outputted
 mov rdi, hypotenuseprompt     ;"The length of the hypotenuse is %5.9lf units."    
 call printf                   ;Call a library function to do the output
 
-;=========== Show farewell message ==============================================================================================            
+;=========== Show farewell message ===========================================================================================            
 mov qword  rax, 0             ;No data from SSE will be printed
 mov  rdi, stringformat        ;"%s"
 mov  rsi, goodbye             ;"Please enjoy your triangles "
 call printf                   ;Call a library function to do the output
-    
-;=========== Compute the length of the title cstring ============================================================================
+
+;=========== Compute the length of the title cstring =========================================================================
+
 mov qword  rax, 0             ;No data from SSE will be printed
 mov  rdi, title               ;Copy to rdi the pointer to the start of the array of 32 bytes        
 call strlen                   ;Call a library function to do the input work
 mov  r13, rax                 ;The length of the string is saved in r13
-    
-;=========== Outputs title on the same line as good_bye =========================================================================
+
+;=========== Outputs title on the same line as good_bye ======================================================================
+
 mov  rdi, stringformat        ;"%s"
 mov  rsi, title               ;Place a pointer to the programmer's title in rsi
 mov byte [rsi + r13 - 1], " " ;replaces newline character with a space
 call printf                   ;Call a library function to do the output 
 
-;=========== Compute the length of the name cstring =============================================================================
+;=========== Compute the length of the name cstring ==========================================================================
+
 mov  rdi, name                ;Copy to rdi the pointer to the start of the array of 32 bytes       
 call strlen                   ;Call a library function to do the input work
 mov  r13, rax                 ;The length of the string is saved in r13
 
-;=========== Outputs name on the same line as good_bye ==========================================================================
+;=========== Outputs name on the same line as good_bye =======================================================================
+
 mov rdi, stringformat         ;"%s"
 mov rsi, name                 ;Place a pointer to the programmer's title in rsi
 mov byte [rsi + r13 -1], " "  ;replaces newline character with a space
 call printf                   ;Call a library function to do the output 
-jmp endfunction               ; jump to the end of function
+jmp endfunction               ;jump to the end of program
 
-;=========== Returns hypotenuse to the calling program ==========================================================================
-endfunction:                   ;end of function
-movsd xmm0, xmm12              ;Select the largest value for return to caller.
+;=========== Returns hypotenuse to the calling program =======================================================================
 
-;===== Restore the pointer to the start of the stack frame before exiting from this function ====================================
+endfunction:                  ;end of area_hypotenuse function
+movsd xmm0, xmm12             ;Select the largest value for return to caller.
+
+;===== Restore the pointer to the start of the stack frame before exiting from this function =================================
+
 ;Epilogue: restore data to the values held before this function was called.
-
 popf                          ;Restore rflags                                                
 pop rbx                       ;Restore rbx                                            
 pop r15                       ;Restore r15                                          
@@ -241,7 +267,7 @@ pop rdx                       ;Restore rdx
 pop rsi                       ;Restore rsi                                            
 pop rdi                       ;Restore rdi                                           
 pop rbp                       ;Restore rbp                                             
-;No parameter with this instruction. This instruction will pop 8 bytes from the integer stack, and jump to the address found on the stack.
 ret     
-;========== End of program triangle.asm =========================================================================================
-;========1=========2=========3=========4=========5=========6=========7=========8=========9=========0=========1=========2=========**
+
+;========== End of program triangle.asm ======================================================================================
+;========1=========2=========3=========4=========5=========6=========7=========8========9========0========1========2========**

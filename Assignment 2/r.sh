@@ -3,6 +3,7 @@
 #Author: Suhyr Hasan
 #Program name:  The Right Triangles Program
 #Purpose: This is a Bash script file whose purpose is to compile and run the program "Right Triangles".
+
 rm *.out
 echo "Assemble the X86 file triangle.asm"
 nasm -f elf64 -l triangle.lis -o triangle.o triangle.asm

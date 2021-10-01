@@ -22,6 +22,7 @@
  *
  * Purpose
  *    In this assignment teaches you how to input and output a float in assembly with proper formatting
+ *    and how to check if the user inputs a negative or zero value for a side.
  * 
  * Project information
  *    Files: pythagoras.c, triangle.asm, run.sh

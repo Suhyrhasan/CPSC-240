@@ -7,7 +7,7 @@
 rm *.out
 echo "Assemble the X86 file triangle.asm"
 nasm -f elf64 -l triangle.lis -o triangle.o triangle.asm
-echo "Compile the C++ file  pythagoras.c"
+echo "Compile the C file  pythagoras.c"
 gcc -c -m64 -Wall -fno-pie -no-pie -l  pythagoras.lis -o  pythagoras.o  pythagoras.c -std=c11
 echo "Link the two 'O' files  pythagoras.o triangle.o"
 gcc -m64 -fno-pie -no-pie -std=c11 -o a.out  pythagoras.o triangle.o 

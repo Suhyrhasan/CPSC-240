@@ -17,7 +17,7 @@
 ;
 ;Program information
 ; Program name: The Right Triangles Program
-;  Programming languages X86 with one module in C++
+;  Programming languages X86 with one module in C
 ;  Date development of version 1.5 began 2021-Sep-10
 ;  Date development of version 1.5 completed 2021-Sep-27
 ;

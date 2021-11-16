@@ -4,7 +4,6 @@
 #Program name: Power Unlimited
 #Purpose: This is a Bash script file whose purpose is to compile and run the program "Power Unlimited".
 
-rm *.out
 echo "Assemble hertz.asm"
 nasm -f elf64 -l hertz.lis -o hertz.o hertz.asm
 
@@ -23,3 +22,4 @@ echo "\n----- Run the program -----"
 echo "----- End Program -----"
 rm *.o
 rm *.lis
+rm *.out

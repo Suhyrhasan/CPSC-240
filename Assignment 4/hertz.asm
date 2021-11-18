@@ -134,7 +134,7 @@ je invalid                    ;Jump to the invalid function if isfloat's return 
 ;Converts string input to float
 mov rdi, resistance           ;Copy to rdi the pointer to the start of the array of 32 bytes 
 call atof                     ;Convert current input from string to float 
-movq xmm13, xmm0              ;Move the value of xmm14 to xmm0
+movq xmm13, xmm0              ;Move the value of xmm0 to xmm13
 
 ;=========== Current Input ======================================================================================================
 mov  rdi, stringformat        ;"%s"
@@ -155,7 +155,7 @@ je invalid                    ;Jump to the invalid function if isfloat's return 
 ;Converts string input to float
 mov rdi, current              ;Copy to rdi the pointer to the start of the array of 32 bytes   
 call atof                     ;Convert current input from string to float   
-movq xmm14, xmm0              ;Move the value of xmm14 to xmm0
+movq xmm14, xmm0              ;Move the value of xmm0 to xmm14
 jmp valid                     ;Jump to the valid function
 
 ;=========== Invalid Input function =============================================================================================

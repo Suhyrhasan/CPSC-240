@@ -14,5 +14,7 @@ Midterm 1 - Concepts Test and Programming test
 
 Midterm 2 - Concepts Test and Programming test
 
+Final - Concepts Test and Programming test
+
 X86 Programming - Information about programming in 8086 assembly language. Complete Example programs (on class website)
 
